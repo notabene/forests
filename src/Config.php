@@ -1,55 +1,75 @@
 <?php
+
 namespace loicm\Forests;
 
+use DotEnv\DotEnv;
 
 class Config
 {
-    protected $properties;
-
-
-    public function __construct($config_file)
+    /**
+     * Create instance of Config
+     *
+     * @param string $file_path path to config file
+     */
+    public function __construct(DotEnv $dotenv)
     {
-        if (!is_readable($config_file)) {
-            throw new \Exception("config file not found");
-        }
+        $dotenv->load();
 
+        $this->setDefaults();
+    }
+
+    /**
+     * Check mandatory configuration variables
+     */
+    public function checkMandatory()
+    {
+        if (!is_dir($this->content_dir)) {
+            echo $this->content_dir,"\n";
+            echo 'content directory does not exist!'."\n";
+            exit;
+        }
+        if (!is_dir($this->output_dir)) {
+            echo $this->output_dir,"\n";
+            echo 'output directory does not exist!'."\n";
+            exit;
+        }
+        if (!is_dir($this->theme_dir)) {
+            echo 'theme '. $this->theme .' does not exist!'."\n";
+            exit;
+        }
+    }
+
+    /**
+     * Set default properties
+     *
+     * @param array $config
+     * @return array $config
+     */
+    protected function setDefaults()
+    {
         $app_dir = realpath(__DIR__.'/../').'/';
 
-        $config = parse_ini_file($config_file);
+        $this->app_dir = $app_dir;
 
-        if (!isset($config['theme']) || $config['theme'] == '') {
-            $config['theme'] = 'default';
+        if ($this->base_path === false || $this->base_path == '') {
+            $this->base_path = '/';
         }
-        if (!isset($config['base_path']) || $config['base_path'] == '') {
-            $config['base_path'] = '/';
+        if ($this->content_dir === false || !is_dir($this->content_dir)) {
+            $this->content_dir = $this->app_dir . 'content/';
         }
-        if (!isset($config['content_dir']) || !is_dir($config['content_dir'])) {
-            echo "content directory not configured","\n";
-            exit;
+        if ($this->output_dir === false) {
+            $this->output_dir = $this->app_dir . 'content_html/';
         }
-        if (!isset($config['output_dir'])) {
-            echo "output directory not configured","\n";
-            exit;
+        if ($this->theme === false || $this->theme == '') {
+            $this->theme = 'plain';
         }
-
-        $this->properties = array_merge(
-            $config,
-            array(
-                'app_dir' => $app_dir,
-                'content_dir' => $config['content_dir'],
-                'output_dir' => $config['output_dir'],
-                'themes_dir' => $app_dir.'themes/',
-                'theme_dir' => $app_dir.'themes/'.$config['theme'].'/',
-                'theme_path' => $config['base_path'].'themes/'.$config['theme'].'/'
-            )
-        );
+        $this->themes_dir = $this->app_dir . 'themes/';
+        $this->theme_dir = $this->app_dir . 'themes/' . $this->theme . '/';
+        $this->theme_path = $this->base_path . 'themes/' . $this->theme .'/';
     }
 
     public function __get($name)
     {
-        if (array_key_exists($name, $this->properties)) {
-            return $this->properties[$name];
-        }
-        return false;
+        return getenv(strtoupper($name));
     }
 }

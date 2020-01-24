@@ -10,7 +10,6 @@ use loicm\Forests\Stages\GenerateNotes;
 use loicm\Forests\Stages\GenerateHome;
 use loicm\Forests\Stages\GenerateFeed;
 use loicm\Forests\Stages\CopyThemeAssets;
-use loicm\Forests\Stages\CopyTalks;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -31,6 +30,7 @@ class SiteBuild extends Base
         $processPages = (new Pipeline())
             ->pipe(new ListPages())
             ->pipe(new GeneratePages($this->app->config));
+
         $processNotes = (new Pipeline())
             ->pipe(new ListNotes())
             ->pipe(new GenerateNotes($this->app->config))
@@ -41,8 +41,7 @@ class SiteBuild extends Base
             ->pipe(new CleanOutput())
             ->pipe($processPages)
             ->pipe($processNotes)
-            ->pipe(new CopyThemeAssets())
-            ->pipe(new CopyTalks());
+            ->pipe(new CopyThemeAssets());
 
         $pipeline->process($this->app->config);
     }
